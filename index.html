@@ -1,64 +1,13 @@
 <!doctype html>
-<html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#365d4b" />
-    <title>Voluntários Ativos | Rua do Céu</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css" />
-  </head>
-  <body>
-    <main class="page-shell">
-      <header class="brand">
-        <img class="brand-mark" src="./logo.png" alt="Logomarca Rua do Céu" />
-        <div>
-          <h1>Voluntários ativos</h1>
-        </div>
-      </header>
-
-      <section class="intro">
-        <p class="eyebrow">CADASTRO DE EQUIPE</p>
-        <h2>Vamos cuidar de quem serve.</h2>
-        <p>Preencha os dados abaixo para registrar um voluntário ativo.</p>
-      </section>
-
-      <section class="card" aria-labelledby="form-title">
-        <div class="card-heading">
-          <div class="icon-circle" aria-hidden="true">♥</div>
-          <div>
-            <h3 id="form-title">Dados do voluntário</h3>
-            <p>Todos os campos são obrigatórios.</p>
-          </div>
-        </div>
-
-        <form id="volunteer-form" novalidate>
-          <label for="fullName">Nome completo</label>
-          <input id="fullName" name="fullName" type="text" autocomplete="name" placeholder="Digite o nome completo" required />
-
-          <label for="role">Função</label>
-          <select id="role" name="role" required>
-            <option value="" selected disabled>Selecione a função</option>
-            <option value="Monitor">Monitor</option>
-            <option value="Líder de Equipe">Líder de Equipe</option>
-            <option value="Administrador">Administrador</option>
-          </select>
-
-          <label for="phone">Telefone / WhatsApp</label>
-          <input id="phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="(00) 00000-0000" required />
-
-          <label for="email">E-mail</label>
-          <input id="email" name="email" type="email" autocomplete="email" placeholder="nome@exemplo.com" required />
-
-          <button id="submit-button" type="submit">Cadastrar voluntário <span aria-hidden="true">→</span></button>
-          <p id="form-message" class="form-message" role="status" aria-live="polite"></p>
-        </form>
-      </section>
-
-      <footer>Rua do Céu · Cadastro de voluntários</footer>
-    </main>
-    <script type="module" src="./app.js"></script>
-  </body>
-</html>
+<html lang="pt-BR"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="theme-color" content="#009EE0"/><title>Voluntários Ativos | Rua do Céu</title><link rel="stylesheet" href="./styles.css"/></head>
+<body><main class="page-shell">
+<header class="brand"><img class="brand-mark" src="./logo.png" alt="Logomarca Rua do Céu"/><div><h1>Voluntários ativos</h1><p class="brand-subtitle">Gestão de acessos</p></div></header>
+<section id="public-view"><section class="intro"><p class="eyebrow">CADASTRO DE EQUIPE</p><p>Preencha os dados abaixo para registrar um voluntário ativo.</p></section><section class="card"><div class="card-heading"><div class="icon-circle">♥</div><div><h3>Dados do voluntário</h3><p>Todos os campos são obrigatórios.</p></div></div><form id="volunteer-form"><label>Nome completo</label><input id="fullName" name="fullName" required/><label>Função</label><select id="role" name="role" required><option value="Monitor">Monitor</option><option value="Líder de Equipe">Líder de Equipe</option><option value="Administrador">Administrador</option></select><label>Telefone / WhatsApp</label><input id="phone" name="phone" required/><label>E-mail</label><input id="email" name="email" type="email" required/><label>Nome da frente de trabalho</label><input id="work-front" name="workFront" placeholder="Ex.: Terra Vermelha, Nova Betânia" required/><fieldset><legend>O que você acredita ser essencial no aplicativo?</legend><label class="check"><input type="checkbox" name="essential" value="Cadastro de famílias e crianças"/> Cadastro de famílias e crianças</label><label class="check"><input type="checkbox" name="essential" value="Organização das equipes"/> Organização das equipes</label><label class="check"><input type="checkbox" name="essential" value="Gestão das dracmas digital"/> Gestão das dracmas digital</label><label class="check"><input type="checkbox" name="essential" value="Agenda e escalas"/> Agenda e escalas</label><label class="check"><input type="checkbox" name="essential" value="Comunicação e avisos"/> Comunicação e avisos</label><label class="check"><input type="checkbox" name="essential" value="Relatórios"/> Relatórios</label></fieldset><label>Outra solicitação</label><textarea id="other-request" name="otherRequest" placeholder="Escreva aqui sua solicitação"></textarea><button id="submit-button">Cadastrar voluntário</button><p id="form-message" class="form-message"></p></form></section><button id="open-access" class="link-button">Acesso Gestor / Master Dev</button></section>
+<section id="access-view" class="hidden"><section class="intro compact"><p class="eyebrow">ÁREA RESTRITA</p><p>Entre com seu e-mail e senha.</p></section><section class="card"><form id="login-form"><label>E-mail</label><input id="login-email" type="email" required/><label>Senha</label><input id="login-password" type="password" minlength="6" required/><button>Entrar</button><p id="login-message" class="form-message"></p></form><p class="helper">Primeiro acesso Master Dev? <button id="open-master-setup" class="text-button" type="button">Criar minha senha</button></p><button class="link-button back-public" type="button">Voltar</button></section></section>
+<section id="master-setup-view" class="hidden"><section class="intro compact"><p class="eyebrow">PRIMEIRO ACESSO</p><p>Master Dev: filipegileade@gmail.com</p></section><section class="card"><form id="master-setup-form"><label>Defina sua senha</label><input id="master-password" type="password" minlength="6" required/><button>Criar acesso Master Dev</button><p id="master-message" class="form-message"></p></form><button class="link-button back-access" type="button">Voltar</button></section></section>
+<section id="invite-view" class="hidden"><section class="intro compact"><p class="eyebrow">CONVITE DE ACESSO</p><p id="invite-description">Defina sua própria senha.</p></section><section class="card"><form id="invite-password-form"><label>Crie sua senha</label><input id="invite-password" type="password" minlength="6" required/><button>Confirmar e criar acesso</button><p id="invite-message" class="form-message"></p></form></section></section>
+<section id="dashboard-view" class="hidden"><section class="dashboard-head"><div><p id="dashboard-eyebrow" class="eyebrow">PAINEL</p><h2 id="dashboard-title">Gestor</h2></div><button id="sign-out" class="outline-button">Sair</button></section><div class="tabs"><button class="tab active" data-panel="manual">Cadastro manual</button><button class="tab" data-panel="invite">Gerar link</button><button id="master-tab" class="tab hidden" data-panel="master">Master Dev</button></div>
+<section id="manual-panel" class="card panel"><h3>Cadastrar manualmente</h3><p>O voluntário será incluído como ativo.</p><form id="manual-form"><label>Nome completo</label><input id="manual-name" required/><label>Função</label><select id="manual-role"><option>Monitor</option><option>Líder de Equipe</option><option>Administrador</option></select><label>Telefone / WhatsApp</label><input id="manual-phone" required/><label>E-mail</label><input id="manual-email" type="email" required/><button>Cadastrar e confirmar</button><p id="manual-message" class="form-message"></p></form></section>
+<section id="invite-panel" class="card panel hidden"><h3>Gerar link para usuário</h3><p>O usuário final abrirá o link e criará a própria senha.</p><form id="invite-form"><label>Nome completo</label><input id="invite-name" required/><label>Função</label><select id="invite-role"><option>Monitor</option><option>Líder de Equipe</option><option>Administrador</option></select><label>E-mail do usuário</label><input id="invite-email" type="email" required/><label>Telefone / WhatsApp</label><input id="invite-phone" required/><button>Gerar link de acesso</button><p id="invite-create-message" class="form-message"></p></form><div id="created-link-box" class="created-link hidden"><label>Link para enviar</label><input id="created-link" readonly/><button id="copy-link" class="outline-button" type="button">Copiar link</button></div></section>
+<section id="master-panel" class="card panel hidden"><h3>Master Dev</h3><p>Crie convites para novos gestores.</p><form id="manager-invite-form"><label>Nome completo do gestor</label><input id="manager-name" required/><label>E-mail do gestor</label><input id="manager-email" type="email" required/><label>Telefone / WhatsApp</label><input id="manager-phone" required/><button>Gerar link de Gestor</button><p id="manager-message" class="form-message"></p></form></section></section>
+<footer>Rua do Céu · Cadastro de voluntários</footer></main><script type="module" src="./app.js"></script></body></html>
