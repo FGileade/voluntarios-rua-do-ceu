@@ -1,0 +1,31 @@
+// Trecho para mesclar nas regras ativas do Firestore.
+// Não publique este arquivo sozinho: ele não contém as regras do app Rua do Céu.
+match /voluntariosAtivos/{submissionId} {
+  allow create: if request.resource.data.keys().hasOnly([
+      'nomeCompleto', 'funcao', 'telefoneWhatsApp', 'email', 'frenteTrabalho',
+      'recursosEssenciais', 'outraSolicitacao', 'ativo', 'status', 'origem', 'criadoEm'
+    ])
+    && request.resource.data.keys().hasAll([
+      'nomeCompleto', 'funcao', 'telefoneWhatsApp', 'email', 'frenteTrabalho',
+      'recursosEssenciais', 'outraSolicitacao', 'ativo', 'status', 'origem', 'criadoEm'
+    ])
+    && request.resource.data.nomeCompleto is string
+    && request.resource.data.nomeCompleto.size() >= 3
+    && request.resource.data.funcao in ['Monitor', 'Líder de Equipe', 'Administrador']
+    && request.resource.data.telefoneWhatsApp is string
+    && request.resource.data.email is string
+    && request.resource.data.frenteTrabalho is string
+    && request.resource.data.recursosEssenciais is list
+    && request.resource.data.recursosEssenciais.size() <= 6
+    && request.resource.data.outraSolicitacao is string
+    && request.resource.data.ativo == true
+    && request.resource.data.status == 'pendente'
+    && request.resource.data.origem == 'voluntarios-rua-do-ceu'
+    && request.resource.data.criadoEm is timestamp;
+
+  allow get, list: if request.auth != null
+    && request.auth.token.email == 'filipegileade@gmail.com'
+    && request.auth.token.email_verified == true;
+
+  allow update, delete: if false;
+}
