@@ -1,0 +1,77 @@
+================================================================================
+RESUMO HISTÓRICO DO PROJETO: Voluntários Rua do Céu
+Data: 2026-09-27 | Horário: 03:56
+================================================================================
+
+1. TÍTULO E DESCRIÇÃO DO PROJETO
+--------------------------------------------------------------------------------
+Projeto: Voluntários Rua do Céu
+Repositório GitHub: https://github.com/FGileade/voluntarios-rua-do-ceu
+Site em Produção: https://voluntariosruadoceu.vercel.app
+Firebase Project: "rua-do-ceu-app"
+Coleção Firestore: "voluntariosAtivos"
+Gestor Autorizado: "filipegileade@gmail.com"
+
+Aplicação Web/PWA voltada ao cadastro público de voluntários ativos e coleta de
+opiniões/necessidades sobre o aplicativo Rua do Céu, equipada com painel restrito
+ao gestor para visualização, edição, exclusão de cadastros e exportação em Excel.
+
+2. STACK TECNOLÓGICA E SERVIÇOS
+--------------------------------------------------------------------------------
+- Front-end: HTML5 semântico, CSS3 moderno com gradientes e variáveis customizadas,
+  Vanilla JavaScript ES Modules.
+- Identidade & Feedback: Skill oficial `feedback-modal-marca` (diálogos acessíveis
+  e Brand Loading Overlay em tela cheia com animação da logomarca).
+- Ícones / Banner: Banner flutuante "Versículo do Dia" com rotação determinística.
+- Planilhas: SheetJS (xlsx v0.20.3) executado 100% no cliente sem chamadas de servidor.
+- Backend & Banco de Dados: Google Cloud Firestore + Firebase Authentication v12.1.0.
+- Hospedagem e CI/CD: Vercel (deploy automático via branch main do GitHub).
+
+3. SEGURANÇA E REGRAS DO FIRESTORE
+--------------------------------------------------------------------------------
+- O banco Firestore do projeto "rua-do-ceu-app" é compartilhado com a aplicação
+  principal da Rua do Céu. Nenhuma regra pré-existente foi substituída.
+- Um backup com timestamp de firestore.rules foi criado em:
+  rua-do-ceu/firestore.rules.backup-20260927-024106 e backup-20260927-034807.
+- Coleção `voluntariosAtivos`:
+  * allow create: Envio público restrito aos campos válidos (nomeCompleto >= 3 chars,
+    função restrita a Monitor/Líder/Administrador, lista de recursos <= 6, criadoEm com serverTimestamp).
+  * allow get, list: Permitido apenas para usuário autenticado com filipegileade@gmail.com
+    e com email_verified == true.
+  * allow update, delete: Permitido exclusivamente para o gestor autenticado com
+    filipegileade@gmail.com e com email_verified == true.
+  * Todas as regras foram compiladas e implantadas via Firebase CLI com sucesso.
+
+4. FLUXO DE FUNCIONAMENTO
+--------------------------------------------------------------------------------
+- Formulário Público: O voluntário preenche nome, função, telefone com máscara (DDD),
+  e-mail, frente de trabalho, seleciona as necessidades e envia uma sugestão.
+- Confirmação de Envio: A skill `feedback-modal-marca` intercepta o envio e apresenta
+  uma confirmação antes de gravar no banco.
+- Loading com a Marca: Durante o envio, surge o overlay animado com a logo da Rua do Céu.
+- Painel do Gestor: Acesso restrito via link no rodapé. Autentica com e-mail e senha.
+  Exige verificação de e-mail. Se ainda não verificado, dispara o link de verificação.
+- Gestão Completa: O gestor consulta as respostas em tempo real, pode baixar o arquivo
+  Excel gerado no navegador, editar qualquer cadastro por modal dedicado ou excluir com confirmação.
+
+5. ESTRUTURA DE PASTAS E ARQUIVOS
+--------------------------------------------------------------------------------
+/voluntariosruadoceu
+├── .agents/skills/            # Skills de automação e padrões (feedback-modal-marca, etc.)
+├── historico/                 # Histórico e documentação da sessão
+├── app.js                     # Controlador principal da aplicação e integração Firebase
+├── feedback.js                # Sistema visual de feedback oficial (modal, loading overlay)
+├── firestore-voluntarios.fragment.rules # Regras específicas da coleção
+├── index.html                 # Estrutura HTML do formulário, login, painel e modais
+├── logo.png                   # Logomarca oficial da Rua do Céu
+├── README.md                  # Apresentação e documentação do repositório
+├── styles.css                 # Folha de estilos completa e responsiva
+├── vercel.json                # Configuração de rotas da Vercel
+├── versiculo-do-dia.js        # Script de exibição do Versículo do Dia
+└── versiculos.json            # Base de dados de 60 versículos bíblicos
+
+6. PRÓXIMOS PASSOS E PENDÊNCIAS
+--------------------------------------------------------------------------------
+- Toda a implantação solicitada (leitura, escrita, edição, exclusão, animação de loading,
+  confirmação de envio e regras compartilhadas do Firestore) está 100% concluída e online.
+================================================================================
