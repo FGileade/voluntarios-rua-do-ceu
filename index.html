@@ -9,13 +9,14 @@
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
-  <main class="page-shell">
+  <div class="page-shell">
     <header class="brand">
       <img class="brand-mark" src="./logo.png" alt="Logomarca Rua do Céu" />
       <div><h1>Voluntários ativos</h1><p class="brand-subtitle">Cadastro e opinião sobre a aplicação</p></div>
     </header>
 
-    <section id="public-view">
+    <main id="main-content">
+    <section id="public-view" aria-label="Cadastro público de voluntários">
     <section class="intro">
       <p class="eyebrow">RUA DO CÉU</p>
       <h2>Queremos ouvir você</h2>
@@ -25,11 +26,12 @@
     <section class="card">
       <div class="card-heading"><div class="icon-circle">♥</div><div><h3>Cadastro do voluntário</h3><p>Preencha seus dados e compartilhe sua opinião.</p></div></div>
       <form id="volunteer-form">
-        <label for="fullName">Nome completo</label><input id="fullName" name="fullName" autocomplete="name" required />
+        <label for="fullName">Nome completo</label><input id="fullName" name="fullName" autocomplete="name" autocapitalize="words" required />
         <label for="role">Função</label>
         <select id="role" name="role" required><option value="Monitor">Monitor</option><option value="Líder de Equipe">Líder de Equipe</option><option value="Administrador">Administrador</option></select>
-        <label for="phone">Telefone / WhatsApp</label><input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required />
-        <label for="email">E-mail</label><input id="email" name="email" type="email" autocomplete="email" required />
+        <label for="phone">Telefone / WhatsApp</label><input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="15" aria-describedby="phone-hint" required />
+        <small id="phone-hint" class="field-hint">Informe DDD e telefone, por exemplo: (27) 99999-9999.</small>
+        <label for="email">E-mail</label><input id="email" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="none" required />
         <label for="work-front">Nome da frente de trabalho</label><input id="work-front" name="workFront" placeholder="Ex.: Terra Vermelha, Nova Betânia" required />
         <fieldset>
           <legend>O que você considera importante na aplicação?</legend>
@@ -47,12 +49,12 @@
     </section>
     </section>
 
-    <section id="manager-login-view" class="manager-view hidden" aria-labelledby="manager-title">
+    <section id="manager-login-view" class="manager-view hidden" aria-labelledby="manager-title" hidden>
       <section class="intro compact"><p class="eyebrow">ACESSO RESTRITO</p><h2 id="manager-title">Área do gestor</h2><p>Entre com o acesso autorizado para ver as respostas.</p></section>
       <section class="card">
         <form id="manager-login-form">
-          <label for="manager-email">E-mail do gestor</label><input id="manager-email" type="email" autocomplete="username" required />
-          <label for="manager-password">Senha</label><input id="manager-password" type="password" autocomplete="current-password" required />
+          <label for="manager-email">E-mail do gestor</label><input id="manager-email" type="email" inputmode="email" autocomplete="username" autocapitalize="none" required />
+          <label for="manager-password">Senha</label><div class="password-field"><input id="manager-password" type="password" autocomplete="current-password" required /><button id="toggle-manager-password" class="password-toggle" type="button" aria-pressed="false">Mostrar senha</button></div>
           <button id="manager-login-button" type="submit">Entrar no painel</button>
           <p id="manager-login-message" class="form-message" aria-live="polite"></p>
         </form>
@@ -60,11 +62,11 @@
       </section>
     </section>
 
-    <section id="manager-dashboard-view" class="manager-view hidden" aria-labelledby="responses-title">
-      <section class="dashboard-head">
+    <section id="manager-dashboard-view" class="manager-view hidden" aria-labelledby="responses-title" hidden>
+      <header class="dashboard-head">
         <div><p class="eyebrow">ÁREA RESTRITA</p><h2 id="responses-title">Respostas dos voluntários</h2></div>
         <button id="manager-sign-out" class="outline-button" type="button">Sair</button>
-      </section>
+      </header>
       <section class="card">
         <div class="response-toolbar"><p id="response-count" class="response-count">Carregando respostas…</p><div class="toolbar-buttons"><button id="refresh-responses" class="outline-button" type="button">Atualizar</button><button id="download-responses" type="button" disabled>Baixar Excel</button></div></div>
         <p id="responses-message" class="form-message" aria-live="polite"></p>
@@ -72,9 +74,23 @@
       </section>
       <button class="link-button back-to-form" type="button">Voltar ao formulário</button>
     </section>
+    </main>
 
-    <footer>Rua do Céu · Cadastro de voluntários <button id="open-manager" class="text-button" type="button">Área do gestor</button></footer>
-  </main>
+    <footer class="site-footer">
+      <p>Rua do Céu · Cadastro de voluntários <button id="open-manager" class="text-button" type="button">Área do gestor</button></p>
+      <p class="app-signature">Developed by <a href="https://gileadehub.com.br/" target="_blank" rel="noopener noreferrer">Gileade HUB</a></p>
+    </footer>
+  </div>
+  <aside id="versiculo-banner" class="versiculo-banner" aria-label="Versículo do Dia" aria-live="polite" hidden>
+    <header class="versiculo-header">
+      <h2>📖 Versículo do Dia</h2>
+      <button id="fechar-versiculo" class="versiculo-close" type="button" aria-label="Fechar versículo do dia">✕</button>
+    </header>
+    <p id="versiculo-texto"></p>
+    <p id="versiculo-ref"></p>
+    <div class="versiculo-progress" aria-hidden="true"><div id="versiculo-progress-fill" class="versiculo-progress-fill"></div></div>
+  </aside>
+  <script src="./versiculo-do-dia.js" defer></script>
   <script type="module" src="./app.js"></script>
 </body>
 </html>

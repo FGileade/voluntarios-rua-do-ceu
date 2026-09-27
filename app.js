@@ -29,9 +29,14 @@ function escapeHtml(value) {
 }
 
 function showArea(area) {
-  $('#public-view').classList.toggle('hidden', area !== 'public');
-  document.querySelectorAll('.manager-view').forEach(view => view.classList.add('hidden'));
-  if (area !== 'public') $(`#${area}`).classList.remove('hidden');
+  const publicView = $('#public-view');
+  publicView.hidden = area !== 'public';
+  publicView.classList.toggle('hidden', area !== 'public');
+  document.querySelectorAll('.manager-view').forEach(view => {
+    const active = view.id === area;
+    view.hidden = !active;
+    view.classList.toggle('hidden', !active);
+  });
   $('#open-manager').classList.toggle('hidden', area !== 'public');
 }
 
@@ -44,6 +49,45 @@ function friendlyAuthError(error) {
 function dateText(value) {
   if (!value?.toDate) return 'Data indisponível';
   return value.toDate().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+}
+
+function formatPhone(value) {
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+  if (!digits) return '';
+  if (digits.length <= 2) return `(${digits}`;
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
+function phoneDigitsBeforeCaret(value, caret) {
+  return value.slice(0, caret).replace(/\D/g, '').length;
+}
+
+function caretAfterDigits(value, digitCount) {
+  if (!digitCount) return value.startsWith('(') ? 1 : 0;
+  let count = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    if (/\d/.test(value[index])) count += 1;
+    if (count === digitCount) return index + 1;
+  }
+  return value.length;
+}
+
+function validatePhone(showMessage = false) {
+  const input = $('#phone');
+  const hint = $('#phone-hint');
+  const digits = input.value.replace(/\D/g, '');
+  const valid = digits.length === 10 || digits.length === 11;
+  input.setCustomValidity(digits.length && !valid ? 'Informe um telefone com DDD e 10 ou 11 números.' : '');
+  if (showMessage && digits.length && !valid) {
+    hint.textContent = 'Telefone incompleto. Informe DDD e 10 ou 11 números.';
+    hint.classList.add('field-error');
+  } else {
+    hint.textContent = 'Informe DDD e telefone, por exemplo: (27) 99999-9999.';
+    hint.classList.remove('field-error');
+  }
+  return valid;
 }
 
 async function loadResponses() {
@@ -63,7 +107,7 @@ async function loadResponses() {
     container.innerHTML = responses.map(person => {
       const needs = Array.isArray(person.recursosEssenciais) ? person.recursosEssenciais.join(', ') : '';
       return `<article class="response-card">
-        <div class="response-card-head"><h3>${escapeHtml(person.nomeCompleto || 'Sem nome')}</h3><time>${escapeHtml(dateText(person.criadoEm))}</time></div>
+        <div class="response-card-head"><h3>${escapeHtml(person.nomeCompleto || 'Sem nome')}</h3><time${person.criadoEm?.toDate ? ` datetime="${escapeHtml(person.criadoEm.toDate().toISOString())}"` : ''}>${escapeHtml(dateText(person.criadoEm))}</time></div>
         <p><strong>Função:</strong> ${escapeHtml(person.funcao || '—')}</p>
         <p><strong>Frente:</strong> ${escapeHtml(person.frenteTrabalho || '—')}</p>
         <p><strong>Telefone:</strong> ${escapeHtml(person.telefoneWhatsApp || '—')}</p>
@@ -82,10 +126,22 @@ async function loadResponses() {
 }
 
 $('#phone').addEventListener('input', event => {
-  const digits = event.target.value.replace(/\D/g, '').slice(0, 11);
-  event.target.value = digits.length > 10
-    ? digits.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')
-    : digits.replace(/(\d{2})(\d{4})(\d{0,4})/, (_, ddd, first, last) => `(${ddd}) ${first}${last ? `-${last}` : ''}`);
+  const input = event.target;
+  const digitPosition = phoneDigitsBeforeCaret(input.value, input.selectionStart ?? input.value.length);
+  input.value = formatPhone(input.value);
+  input.setSelectionRange(caretAfterDigits(input.value, digitPosition), caretAfterDigits(input.value, digitPosition));
+  validatePhone(false);
+});
+$('#phone').addEventListener('blur', () => validatePhone(true));
+
+$('#toggle-manager-password').addEventListener('click', event => {
+  const button = event.currentTarget;
+  const password = $('#manager-password');
+  const visible = password.type === 'password';
+  password.type = visible ? 'text' : 'password';
+  button.setAttribute('aria-pressed', String(visible));
+  button.textContent = visible ? 'Ocultar senha' : 'Mostrar senha';
+  password.focus({ preventScroll: true });
 });
 
 form.addEventListener('submit', async event => {
@@ -95,6 +151,18 @@ form.addEventListener('submit', async event => {
 
   const recursosEssenciais = [...document.querySelectorAll('input[name="essential"]:checked')].map(item => item.value);
   const outraSolicitacao = $('#other-request').value.trim();
+  const nome = $('#fullName').value.trim().replace(/\s+/g, ' ');
+  if (!nome) {
+    setMessage(message, 'Informe seu nome completo.', true);
+    $('#fullName').focus();
+    submit.disabled = false;
+    return;
+  }
+  if (!validatePhone(true)) {
+    $('#phone').reportValidity();
+    submit.disabled = false;
+    return;
+  }
   if (!recursosEssenciais.length && !outraSolicitacao) {
     setMessage(message, 'Selecione ao menos uma necessidade ou escreva uma sugestão.', true);
     submit.disabled = false;
@@ -103,7 +171,7 @@ form.addEventListener('submit', async event => {
 
   try {
     await addDoc(collection(db, 'voluntariosAtivos'), {
-      nomeCompleto: $('#fullName').value.trim(),
+      nomeCompleto: nome,
       funcao: $('#role').value,
       telefoneWhatsApp: $('#phone').value.trim(),
       email: $('#email').value.trim().toLowerCase(),
