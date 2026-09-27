@@ -15,6 +15,7 @@
       <div><h1>Voluntários ativos</h1><p class="brand-subtitle">Cadastro e opinião sobre a aplicação</p></div>
     </header>
 
+    <section id="public-view">
     <section class="intro">
       <p class="eyebrow">RUA DO CÉU</p>
       <h2>Queremos ouvir você</h2>
@@ -44,7 +45,35 @@
         <p id="form-message" class="form-message" aria-live="polite"></p>
       </form>
     </section>
-    <footer>Rua do Céu · Cadastro de voluntários</footer>
+    </section>
+
+    <section id="manager-login-view" class="manager-view hidden" aria-labelledby="manager-title">
+      <section class="intro compact"><p class="eyebrow">ACESSO RESTRITO</p><h2 id="manager-title">Área do gestor</h2><p>Entre com o acesso autorizado para ver as respostas.</p></section>
+      <section class="card">
+        <form id="manager-login-form">
+          <label for="manager-email">E-mail do gestor</label><input id="manager-email" type="email" autocomplete="username" required />
+          <label for="manager-password">Senha</label><input id="manager-password" type="password" autocomplete="current-password" required />
+          <button id="manager-login-button" type="submit">Entrar no painel</button>
+          <p id="manager-login-message" class="form-message" aria-live="polite"></p>
+        </form>
+        <button class="link-button back-to-form" type="button">Voltar ao formulário</button>
+      </section>
+    </section>
+
+    <section id="manager-dashboard-view" class="manager-view hidden" aria-labelledby="responses-title">
+      <section class="dashboard-head">
+        <div><p class="eyebrow">ÁREA RESTRITA</p><h2 id="responses-title">Respostas dos voluntários</h2></div>
+        <button id="manager-sign-out" class="outline-button" type="button">Sair</button>
+      </section>
+      <section class="card">
+        <div class="response-toolbar"><p id="response-count" class="response-count">Carregando respostas…</p><div class="toolbar-buttons"><button id="refresh-responses" class="outline-button" type="button">Atualizar</button><button id="download-responses" type="button" disabled>Baixar Excel</button></div></div>
+        <p id="responses-message" class="form-message" aria-live="polite"></p>
+        <div id="response-list" class="response-list"><p class="helper">Carregando…</p></div>
+      </section>
+      <button class="link-button back-to-form" type="button">Voltar ao formulário</button>
+    </section>
+
+    <footer>Rua do Céu · Cadastro de voluntários <button id="open-manager" class="text-button" type="button">Área do gestor</button></footer>
   </main>
   <script type="module" src="./app.js"></script>
 </body>
