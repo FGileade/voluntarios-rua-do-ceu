@@ -1,23 +1,23 @@
-:root { --forest:#365d4b; --deep:#183a31; --sage:#e9f0e9; --ink:#20312b; --muted:#63736c; --line:#dce5dd; --paper:#fffdf9; }
+:root { --blue:#009EE0; --blue-dark:#0087c2; --purple:#6C2A8C; --green:#009640; --orange:#F39200; --red:#E30613; --pink:#E4007B; --ink:#0f172a; --muted:#475569; --line:#dbe5ee; --paper:#ffffff; }
 * { box-sizing: border-box; }
-body { margin:0; min-height:100vh; background:linear-gradient(135deg,#eaf1e9 0%,#f9f6ef 55%,#e2ebe0 100%); color:var(--ink); font-family:"DM Sans",sans-serif; }
+body { margin:0; min-height:100vh; background:linear-gradient(135deg,#eef9fe 0%,#ffffff 52%,#f8f2fb 100%); color:var(--ink); font-family:"DM Sans",sans-serif; }
 .page-shell { width:min(100%,680px); margin:auto; padding:44px 24px 30px; }
-.brand { display:flex; gap:13px; align-items:center; color:var(--deep); }
-.brand-mark { width:52px; height:52px; object-fit:contain; border-radius:14px; }
-.brand p,.eyebrow { margin:0; font-size:11px; letter-spacing:.15em; font-weight:700; }
-.brand h1 { margin:2px 0 0; font-size:17px; }
+.brand { display:flex; gap:13px; align-items:center; color:var(--ink); }
+.brand-mark { width:58px; height:58px; object-fit:contain; }
+.eyebrow { margin:0; font-size:11px; letter-spacing:.15em; font-weight:700; }
+.brand h1 { margin:0; font-size:19px; }
 .intro { margin:58px 0 28px; }
-.eyebrow { color:var(--forest); }
-.intro h2 { margin:9px 0 10px; font:700 clamp(32px,7vw,46px)/1.05 "Playfair Display",serif; color:var(--deep); }
+.eyebrow { color:var(--purple); }
+.intro h2 { margin:9px 0 10px; font:700 clamp(32px,7vw,46px)/1.05 "Playfair Display",serif; color:var(--purple); }
 .intro p:not(.eyebrow) { margin:0; color:var(--muted); font-size:16px; line-height:1.55; }
-.card { background:rgba(255,253,249,.94); border:1px solid rgba(255,255,255,.8); border-radius:24px; padding:26px; box-shadow:0 20px 55px rgba(34,59,45,.12); }
+.card { background:rgba(255,255,255,.94); border:1px solid rgba(0,158,224,.14); border-radius:24px; padding:26px; box-shadow:0 20px 55px rgba(0,76,118,.12); }
 .card-heading { display:flex; gap:13px; align-items:center; padding-bottom:22px; border-bottom:1px solid var(--line); }
-.icon-circle { display:grid; place-items:center; height:42px; width:42px; background:var(--sage); color:var(--forest); border-radius:50%; }
+.icon-circle { display:grid; place-items:center; height:42px; width:42px; background:#f4eafa; color:var(--purple); border-radius:50%; }
 .card h3 { margin:0; font-size:18px; }.card-heading p { margin:3px 0 0; font-size:13px; color:var(--muted); }
 form { display:grid; gap:8px; margin-top:23px; } label { margin-top:8px; font-size:14px; font-weight:700; }
 input,select { width:100%; height:50px; padding:0 14px; font:inherit; color:var(--ink); border:1px solid var(--line); border-radius:12px; background:#fff; outline:none; transition:.2s; }
-input::placeholder { color:#9aa69f; } input:focus,select:focus { border-color:var(--forest); box-shadow:0 0 0 4px rgba(54,93,75,.13); }
-button { height:52px; margin-top:16px; border:0; border-radius:13px; background:var(--forest); color:white; font:700 15px "DM Sans",sans-serif; cursor:pointer; transition:.2s; } button:hover { background:var(--deep); transform:translateY(-1px); } button:disabled { opacity:.65; cursor:wait; transform:none; }
-.form-message { min-height:22px; margin:4px 0 0; font-size:14px; font-weight:600; }.form-message.success { color:#257044; }.form-message.error { color:#a63030; }
+input::placeholder { color:#94a3b8; } input:focus,select:focus { border-color:var(--blue); box-shadow:0 0 0 4px rgba(0,158,224,.16); }
+button { height:52px; margin-top:16px; border:0; border-radius:13px; background:var(--blue); color:white; font:700 15px "DM Sans",sans-serif; cursor:pointer; transition:.2s; } button:hover { background:var(--blue-dark); transform:translateY(-1px); } button:disabled { opacity:.65; cursor:wait; transform:none; }
+.form-message { min-height:22px; margin:4px 0 0; font-size:14px; font-weight:600; }.form-message.success { color:var(--green); }.form-message.error { color:var(--red); }
 footer { margin-top:30px; color:var(--muted); text-align:center; font-size:12px; }
 @media (max-width:480px){.page-shell{padding:30px 16px 24px}.intro{margin-top:42px}.card{padding:20px;border-radius:20px}}
