@@ -1,19 +1,62 @@
-import{initializeApp}from'https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js';
-import{getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut}from'https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js';
-import{getFirestore,collection,addDoc,doc,getDoc,setDoc,updateDoc,serverTimestamp}from'https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js';
-const app=initializeApp({apiKey:'AIzaSyC0QPpzGD9IzPAe83GUdoLbLCR7YhVXOnQ',authDomain:'rua-do-ceu-app.firebaseapp.com',projectId:'rua-do-ceu-app',storageBucket:'rua-do-ceu-app.firebasestorage.app',messagingSenderId:'913845110106',appId:'1:913845110106:web:1b554626a109d8abe0df63'}),db=getFirestore(app),auth=getAuth(app),MASTER='filipegileade@gmail.com',$=s=>document.querySelector(s);
-const msg=(id,t,e=false)=>{let x=$(id);x.textContent=t;x.className='form-message '+(e?'error':'success')},go=id=>{['#public-view','#access-view','#master-setup-view','#invite-view','#dashboard-view'].forEach(x=>$(x).classList.add('hidden'));$(id).classList.remove('hidden')},entry=(n,r,p,e,ph,extra={})=>({nomeCompleto:n,funcao:r,telefoneWhatsApp:p,email:e.toLowerCase(),ativo:true,confirmado:true,criadoEm:serverTimestamp(),origem:ph,...extra});
-['#phone','#manual-phone','#invite-phone','#manager-phone'].forEach(s=>$(s).addEventListener('input',e=>{let d=e.target.value.replace(/\D/g,'').slice(0,11);e.target.value=d.replace(/(\d{2})(\d{0,5})(\d{0,4})/,(_,a,b,c)=>b?'('+a+') '+b+(c?'-'+c:''):'('+a)}));
-function panel(n){document.querySelectorAll('.panel').forEach(x=>x.classList.add('hidden'));$('#'+n+'-panel').classList.remove('hidden');document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.panel===n))}
-function dash(role){$('#dashboard-title').textContent=role==='master'?'Master Dev':'Gestor';$('#dashboard-eyebrow').textContent=role==='master'?'PAINEL MESTRE':'PAINEL GESTOR';$('#master-tab').classList.toggle('hidden',role!=='master');go('#dashboard-view');panel('manual')}
-async function invite(n,r,p,e,status,showLink=false){let ref=await addDoc(collection(db,'convitesVoluntarios'),{nomeCompleto:n,role:r,telefoneWhatsApp:p,email:e.toLowerCase(),status:'pendente',criadoPor:auth.currentUser.email,criadoEm:serverTimestamp(),origem:'voluntarios-rua-do-ceu'}),link=location.origin+location.pathname+'?convite='+ref.id;msg(status,'Link criado. Envie ao usuário final.');if(showLink){$('#created-link').value=link;$('#created-link-box').classList.remove('hidden')}return link}
-$('#volunteer-form').onsubmit=async e=>{e.preventDefault();try{let essentials=[...document.querySelectorAll('input[name="essential"]:checked')].map(x=>x.value);await addDoc(collection(db,'voluntariosAtivos'),entry($('#fullName').value,$('#role').value,$('#phone').value,$('#email').value,'voluntarios-rua-do-ceu',{frenteTrabalho:$('#work-front').value.trim(),recursosEssenciais:essentials,outraSolicitacao:$('#other-request').value.trim()}));e.target.reset();msg('#form-message','Voluntário cadastrado com sucesso.')}catch{msg('#form-message','Não foi possível salvar. Verifique as permissões do Firebase.',true)}};
-$('#open-access').onclick=()=>go('#access-view');document.querySelectorAll('.back-public').forEach(x=>x.onclick=()=>go('#public-view'));document.querySelectorAll('.back-access').forEach(x=>x.onclick=()=>go('#access-view'));$('#open-master-setup').onclick=()=>go('#master-setup-view');
-$('#login-form').onsubmit=async e=>{e.preventDefault();try{let c=await signInWithEmailAndPassword(auth,$('#login-email').value,$('#login-password').value),p=await getDoc(doc(db,'usuariosVoluntarios',c.user.uid));dash(c.user.email===MASTER?'master':p.data()?.role==='gestor'?'gestor':'gestor')}catch{msg('#login-message','E-mail ou senha inválidos.',true)}};
-$('#master-setup-form').onsubmit=async e=>{e.preventDefault();try{let c=await createUserWithEmailAndPassword(auth,MASTER,$('#master-password').value);await setDoc(doc(db,'usuariosVoluntarios',c.user.uid),{email:MASTER,role:'master',nomeCompleto:'Master Dev',ativo:true,criadoEm:serverTimestamp()});dash('master')}catch{msg('#master-message','Este acesso já existe ou a senha não é válida.',true)}};
-$('#manual-form').onsubmit=async e=>{e.preventDefault();try{await addDoc(collection(db,'voluntariosAtivos'),entry($('#manual-name').value,$('#manual-role').value,$('#manual-phone').value,$('#manual-email').value,'gestor'));e.target.reset();msg('#manual-message','Cadastro confirmado com sucesso.')}catch{msg('#manual-message','Não foi possível confirmar o cadastro.',true)}};
-$('#invite-form').onsubmit=async e=>{e.preventDefault();try{await invite($('#invite-name').value,$('#invite-role').value,$('#invite-phone').value,$('#invite-email').value,'#invite-create-message',true)}catch{msg('#invite-create-message','Não foi possível gerar o link.',true)}};
-$('#manager-invite-form').onsubmit=async e=>{e.preventDefault();try{let l=await invite($('#manager-name').value,'gestor',$('#manager-phone').value,$('#manager-email').value,'#manager-message');await navigator.clipboard.writeText(l);msg('#manager-message','Link de Gestor criado e copiado.')}catch{msg('#manager-message','Não foi possível gerar o link.',true)}};
-$('#copy-link').onclick=async()=>{await navigator.clipboard.writeText($('#created-link').value);$('#copy-link').textContent='Link copiado'};$('#sign-out').onclick=async()=>{await signOut(auth);go('#public-view')};document.querySelectorAll('.tab').forEach(x=>x.onclick=()=>panel(x.dataset.panel));
-let id=new URLSearchParams(location.search).get('convite'),pending;if(id)getDoc(doc(db,'convitesVoluntarios',id)).then(s=>{if(!s.exists()||s.data().status!=='pendente')return;pending=s;$('#invite-description').textContent='Olá, '+s.data().nomeCompleto+'. Defina sua própria senha.';go('#invite-view')});
-$('#invite-password-form').onsubmit=async e=>{e.preventDefault();try{let d=pending.data(),c=await createUserWithEmailAndPassword(auth,d.email,$('#invite-password').value);await setDoc(doc(db,'usuariosVoluntarios',c.user.uid),{email:d.email,nomeCompleto:d.nomeCompleto,telefoneWhatsApp:d.telefoneWhatsApp,role:d.role==='gestor'?'gestor':'voluntario',ativo:true,criadoEm:serverTimestamp()});await addDoc(collection(db,'voluntariosAtivos'),entry(d.nomeCompleto,d.role,d.telefoneWhatsApp,d.email,'convite'));await updateDoc(pending.ref,{status:'confirmado',confirmadoEm:serverTimestamp(),usuarioId:c.user.uid});msg('#invite-message','Acesso criado com sucesso.');setTimeout(()=>dash(d.role==='gestor'?'gestor':'gestor'),500)}catch{msg('#invite-message','Este e-mail já possui acesso ou a senha não é válida.',true)}};
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js';
+import { addDoc, collection, getFirestore, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js';
+
+const app = initializeApp({
+  apiKey: 'AIzaSyC0QPpzGD9IzPAe83GUdoLbLCR7YhVXOnQ',
+  authDomain: 'rua-do-ceu-app.firebaseapp.com',
+  projectId: 'rua-do-ceu-app',
+  storageBucket: 'rua-do-ceu-app.firebasestorage.app',
+  messagingSenderId: '913845110106',
+  appId: '1:913845110106:web:1b554626a109d8abe0df63',
+});
+const db = getFirestore(app);
+const form = document.querySelector('#volunteer-form');
+const message = document.querySelector('#form-message');
+const submit = document.querySelector('#submit-button');
+
+document.querySelector('#phone').addEventListener('input', event => {
+  const digits = event.target.value.replace(/\D/g, '').slice(0, 11);
+  event.target.value = digits.length > 10
+    ? digits.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')
+    : digits.replace(/(\d{2})(\d{4})(\d{0,4})/, (_, ddd, first, last) => `(${ddd}) ${first}${last ? `-${last}` : ''}`);
+});
+
+form.addEventListener('submit', async event => {
+  event.preventDefault();
+  submit.disabled = true;
+  message.textContent = '';
+
+  const recursosEssenciais = [...document.querySelectorAll('input[name="essential"]:checked')].map(item => item.value);
+  const outraSolicitacao = document.querySelector('#other-request').value.trim();
+  if (!recursosEssenciais.length && !outraSolicitacao) {
+    message.textContent = 'Selecione ao menos uma necessidade ou escreva uma sugestão.';
+    message.className = 'form-message error';
+    submit.disabled = false;
+    return;
+  }
+
+  try {
+    await addDoc(collection(db, 'voluntariosAtivos'), {
+      nomeCompleto: document.querySelector('#fullName').value.trim(),
+      funcao: document.querySelector('#role').value,
+      telefoneWhatsApp: document.querySelector('#phone').value.trim(),
+      email: document.querySelector('#email').value.trim().toLowerCase(),
+      frenteTrabalho: document.querySelector('#work-front').value.trim(),
+      recursosEssenciais,
+      outraSolicitacao,
+      ativo: true,
+      status: 'pendente',
+      origem: 'voluntarios-rua-do-ceu',
+      criadoEm: serverTimestamp(),
+    });
+    form.reset();
+    message.textContent = 'Obrigado! Seu cadastro e sua opinião foram enviados.';
+    message.className = 'form-message success';
+  } catch (error) {
+    console.error('Falha ao salvar cadastro de voluntário.', error);
+    message.textContent = 'Não foi possível enviar agora. Verifique sua conexão e tente novamente.';
+    message.className = 'form-message error';
+  } finally {
+    submit.disabled = false;
+  }
+});
