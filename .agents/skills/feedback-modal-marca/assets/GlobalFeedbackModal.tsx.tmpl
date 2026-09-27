@@ -1,0 +1,202 @@
+import React, { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { AlertTriangle, CheckCircle2, CircleX, HelpCircle, Info, Loader2, X } from 'lucide-react';
+import type { FeedbackRequest, FeedbackType } from '../context/FeedbackContext';
+
+interface GlobalFeedbackModalProps {
+  request: FeedbackRequest | null;
+  isClosing: boolean;
+  isProcessing: boolean;
+  onDismiss: () => void;
+  onPrimary: () => void | Promise<void>;
+}
+
+const feedbackAppearance: Record<FeedbackType, {
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  iconClass: string;
+  accentClass: string;
+}> = {
+  success: {
+    label: 'Sucesso',
+    icon: CheckCircle2,
+    iconClass: 'text-emerald-400',
+    accentClass: 'border-emerald-500/40'
+  },
+  error: {
+    label: 'Erro',
+    icon: CircleX,
+    iconClass: 'text-red-400',
+    accentClass: 'border-red-500/50'
+  },
+  attention: {
+    label: 'Atenção',
+    icon: AlertTriangle,
+    iconClass: 'text-amber-400',
+    accentClass: 'border-amber-500/50'
+  },
+  info: {
+    label: 'Informação',
+    icon: Info,
+    iconClass: 'text-sky-400',
+    accentClass: 'border-sky-500/40'
+  },
+  confirmation: {
+    label: 'Confirmação',
+    icon: HelpCircle,
+    iconClass: 'text-amber-400',
+    accentClass: 'border-red-500/50'
+  }
+};
+
+const getFocusableElements = (dialog: HTMLElement) => Array.from(dialog.querySelectorAll<HTMLElement>(
+  'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+));
+
+export const GlobalFeedbackModal: React.FC<GlobalFeedbackModalProps> = ({
+  request,
+  isClosing,
+  isProcessing,
+  onDismiss,
+  onPrimary
+}) => {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const primaryButtonRef = useRef<HTMLButtonElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const previousOverflowRef = useRef('');
+  const previousTouchActionRef = useRef('');
+  const isProcessingRef = useRef(isProcessing);
+
+  useEffect(() => {
+    isProcessingRef.current = isProcessing;
+  }, [isProcessing]);
+
+  useEffect(() => {
+    if (!request) return undefined;
+
+    previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    previousOverflowRef.current = document.body.style.overflow;
+    previousTouchActionRef.current = document.body.style.touchAction;
+    document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
+
+    const focusFrame = window.requestAnimationFrame(() => primaryButtonRef.current?.focus());
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        if (!isProcessingRef.current) onDismiss();
+        return;
+      }
+
+      if (event.key !== 'Tab' || !dialogRef.current) return;
+      const focusable = getFocusableElements(dialogRef.current);
+      if (focusable.length === 0) {
+        event.preventDefault();
+        dialogRef.current.focus();
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.cancelAnimationFrame(focusFrame);
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousOverflowRef.current;
+      document.body.style.touchAction = previousTouchActionRef.current;
+      previousFocusRef.current?.focus();
+    };
+  }, [onDismiss, request]);
+
+  if (!request) return null;
+
+  const appearance = feedbackAppearance[request.type];
+  const Icon = appearance.icon;
+  const isConfirmation = request.type === 'confirmation';
+  const primaryLabel = isProcessing
+    ? 'Processando...'
+    : isConfirmation
+      ? request.confirmLabel || 'Confirmar'
+      : request.buttonLabel || 'Entendi';
+
+  return createPortal(
+    <div className="global-feedback-layer" aria-hidden={false}>
+      <div className="global-feedback-backdrop" aria-hidden="true" />
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="global-feedback-title"
+        aria-describedby="global-feedback-message"
+        tabIndex={-1}
+        className={`global-feedback-dialog ${appearance.accentClass} ${isClosing ? 'global-feedback-dialog--closing' : 'global-feedback-dialog--entering'}`}
+      >
+        <header className="global-feedback-header">
+          <div className="global-feedback-brand">
+            <img
+              src="{{LOGO_SRC}}"
+              alt="{{BRAND_NAME}}"
+              className="global-feedback-logo"
+            />
+            <div>
+              <span className="global-feedback-brand-name">{{BRAND_NAME}}</span>
+              <span className="global-feedback-brand-label">{{BRAND_LABEL}}</span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onDismiss}
+            disabled={isProcessing || isClosing}
+            aria-label="Fechar notificação"
+            className="global-feedback-close"
+          >
+            <X aria-hidden="true" className="h-5 w-5" />
+          </button>
+        </header>
+
+        <div className="global-feedback-content">
+          <div className={`global-feedback-icon ${appearance.iconClass}`} aria-hidden="true">
+            <Icon className="h-8 w-8" />
+          </div>
+          <span className={`global-feedback-type ${appearance.iconClass}`}>{appearance.label}</span>
+          <h2 id="global-feedback-title" className="global-feedback-title">{request.title}</h2>
+          <p id="global-feedback-message" className="global-feedback-message">{request.message}</p>
+        </div>
+
+        <footer className={`global-feedback-actions ${isConfirmation ? 'global-feedback-actions--confirmation' : ''}`}>
+          {isConfirmation && (
+            <button
+              type="button"
+              onClick={onDismiss}
+              disabled={isProcessing || isClosing}
+              className="global-feedback-button global-feedback-button--secondary"
+            >
+              {request.cancelLabel || 'Cancelar'}
+            </button>
+          )}
+          <button
+            ref={primaryButtonRef}
+            type="button"
+            onClick={() => void onPrimary()}
+            disabled={isProcessing || isClosing}
+            className="global-feedback-button global-feedback-button--primary"
+          >
+            {isProcessing && <Loader2 aria-hidden="true" className="h-5 w-5 animate-spin" />}
+            {primaryLabel}
+          </button>
+        </footer>
+      </div>
+    </div>,
+    document.body
+  );
+};
+

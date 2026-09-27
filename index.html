@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#365d4b" />
+    <title>Voluntários Ativos | Rua do Céu</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="page-shell">
+      <header class="brand">
+        <span class="brand-mark" aria-hidden="true">R</span>
+        <div>
+          <p>ESCOLA RUA DO CÉU</p>
+          <h1>Voluntários ativos</h1>
+        </div>
+      </header>
+
+      <section class="intro">
+        <p class="eyebrow">CADASTRO DE EQUIPE</p>
+        <h2>Vamos cuidar de quem serve.</h2>
+        <p>Preencha os dados abaixo para registrar um voluntário ativo.</p>
+      </section>
+
+      <section class="card" aria-labelledby="form-title">
+        <div class="card-heading">
+          <div class="icon-circle" aria-hidden="true">♥</div>
+          <div>
+            <h3 id="form-title">Dados do voluntário</h3>
+            <p>Todos os campos são obrigatórios.</p>
+          </div>
+        </div>
+
+        <form id="volunteer-form" novalidate>
+          <label for="fullName">Nome completo</label>
+          <input id="fullName" name="fullName" type="text" autocomplete="name" placeholder="Digite o nome completo" required />
+
+          <label for="role">Função</label>
+          <select id="role" name="role" required>
+            <option value="" selected disabled>Selecione a função</option>
+            <option value="Monitor">Monitor</option>
+            <option value="Líder de Equipe">Líder de Equipe</option>
+            <option value="Administrador">Administrador</option>
+          </select>
+
+          <label for="phone">Telefone / WhatsApp</label>
+          <input id="phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="(00) 00000-0000" required />
+
+          <label for="email">E-mail</label>
+          <input id="email" name="email" type="email" autocomplete="email" placeholder="nome@exemplo.com" required />
+
+          <button id="submit-button" type="submit">Cadastrar voluntário <span aria-hidden="true">→</span></button>
+          <p id="form-message" class="form-message" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+
+      <footer>Escola Rua do Céu · Cadastro de voluntários</footer>
+    </main>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,47 @@
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
+
+export interface BrandLoadingOverlayProps {
+  visible: boolean;
+  message?: string;
+}
+
+export const BrandLoadingOverlay: React.FC<BrandLoadingOverlayProps> = ({ visible, message }) => {
+  const [mounted, setMounted] = useState(visible);
+
+  useEffect(() => {
+    if (visible) setMounted(true);
+  }, [visible]);
+
+  if (!mounted) return null;
+
+  const handleTransitionEnd = (event: React.TransitionEvent<HTMLDivElement>) => {
+    if (event.target !== event.currentTarget) return;
+    if (!visible) setMounted(false);
+  };
+
+  return createPortal(
+    <div
+      className={`brand-loading-layer ${visible ? 'brand-loading-layer--visible' : ''}`}
+      role="status"
+      aria-live="polite"
+      aria-busy={visible}
+      aria-hidden={!visible}
+      onTransitionEnd={handleTransitionEnd}
+    >
+      <div className="brand-loading-backdrop" />
+      <div className="brand-loading-content">
+        <div className="brand-loading-ring">
+          <img
+            src="{{LOGO_SRC}}"
+            alt="{{BRAND_NAME}}"
+            className="brand-loading-logo"
+          />
+        </div>
+        {message && <p className="brand-loading-message">{message}</p>}
+      </div>
+    </div>,
+    document.body
+  );
+};
+

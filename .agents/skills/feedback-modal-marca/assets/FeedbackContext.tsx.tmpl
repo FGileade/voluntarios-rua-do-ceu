@@ -1,0 +1,176 @@
+import React, { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
+import { GlobalFeedbackModal } from '../components/GlobalFeedbackModal';
+import { BrandLoadingOverlay } from '../components/BrandLoadingOverlay';
+
+export type FeedbackType = 'success' | 'error' | 'attention' | 'info' | 'confirmation';
+export type NotificationFeedbackType = Exclude<FeedbackType, 'confirmation'>;
+
+export interface NotificationFeedbackOptions {
+  type: NotificationFeedbackType;
+  title: string;
+  message: string;
+  buttonLabel?: string;
+}
+
+export interface ConfirmationFeedbackOptions {
+  title: string;
+  message: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  action?: () => void | Promise<void>;
+}
+
+export type FeedbackRequest =
+  | (NotificationFeedbackOptions & { id: number })
+  | (ConfirmationFeedbackOptions & { id: number; type: 'confirmation'; resolve: (confirmed: boolean) => void });
+
+interface FeedbackContextValue {
+  notify: (options: NotificationFeedbackOptions) => void;
+  requestConfirmation: (options: ConfirmationFeedbackOptions) => Promise<boolean>;
+  showLoading: (message?: string) => void;
+  hideLoading: () => void;
+  withLoading: <T>(action: () => Promise<T>, message?: string) => Promise<T>;
+}
+
+type DistributiveOmit<T, K extends keyof T> = T extends unknown ? Omit<T, K> : never;
+
+const FeedbackContext = createContext<FeedbackContextValue | undefined>(undefined);
+
+const getErrorMessage = (error: unknown) => (
+  error instanceof Error && error.message.trim()
+    ? error.message
+    : 'Não foi possível concluir esta operação. Tente novamente.'
+);
+
+export const FeedbackProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [queue, setQueue] = useState<FeedbackRequest[]>([]);
+  const [isClosing, setIsClosing] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState<string | undefined>(undefined);
+  const nextId = useRef(0);
+  const closingRef = useRef(false);
+  const processingRef = useRef(false);
+  const loadingDepthRef = useRef(0);
+
+  const enqueue = useCallback((request: DistributiveOmit<FeedbackRequest, 'id'>) => {
+    const id = nextId.current++;
+    setQueue(current => [...current, { ...request, id } as FeedbackRequest]);
+  }, []);
+
+  const notify = useCallback((options: NotificationFeedbackOptions) => {
+    enqueue(options);
+  }, [enqueue]);
+
+  const requestConfirmation = useCallback((options: ConfirmationFeedbackOptions) => (
+    new Promise<boolean>(resolve => {
+      enqueue({ ...options, type: 'confirmation', resolve });
+    })
+  ), [enqueue]);
+
+  // Overlay de loading com a logo, independente da fila de modais — pensado para
+  // ações imediatas como login/cadastro, onde não há nada a confirmar antes.
+  const showLoading = useCallback((message?: string) => {
+    loadingDepthRef.current += 1;
+    setLoadingMessage(message);
+    setIsLoading(true);
+  }, []);
+
+  const hideLoading = useCallback(() => {
+    loadingDepthRef.current = Math.max(0, loadingDepthRef.current - 1);
+    if (loadingDepthRef.current === 0) setIsLoading(false);
+  }, []);
+
+  // Chamadas aninhadas (ex.: uma ação que dispara outra) incrementam/decrementam
+  // loadingDepthRef, então o overlay só some quando a última delas terminar.
+  const withLoading = useCallback(async <T,>(action: () => Promise<T>, message?: string): Promise<T> => {
+    showLoading(message);
+    try {
+      return await action();
+    } finally {
+      hideLoading();
+    }
+  }, [showLoading, hideLoading]);
+
+  const finishActive = useCallback((confirmed: boolean) => {
+    if (closingRef.current) return;
+    closingRef.current = true;
+    setIsClosing(true);
+
+    window.setTimeout(() => {
+      setQueue(current => {
+        const [active] = current;
+        if (active?.type === 'confirmation') {
+          active.resolve(confirmed);
+        }
+        return current.slice(1);
+      });
+      closingRef.current = false;
+      setIsClosing(false);
+    }, 180);
+  }, []);
+
+  const handleDismiss = useCallback(() => {
+    if (!queue[0] || processingRef.current) return;
+    finishActive(false);
+  }, [finishActive, queue]);
+
+  const handlePrimary = useCallback(async () => {
+    const active = queue[0];
+    if (!active || closingRef.current || processingRef.current) return;
+
+    if (active.type !== 'confirmation' || !active.action) {
+      finishActive(true);
+      return;
+    }
+
+    processingRef.current = true;
+    setIsProcessing(true);
+    try {
+      await active.action();
+      finishActive(true);
+    } catch (error) {
+      enqueue({
+        type: 'error',
+        title: 'Erro',
+        message: getErrorMessage(error),
+        buttonLabel: 'Entendi'
+      });
+      finishActive(false);
+    } finally {
+      processingRef.current = false;
+      setIsProcessing(false);
+    }
+  }, [enqueue, finishActive, queue]);
+
+  const contextValue = useMemo<FeedbackContextValue>(() => ({
+    notify,
+    requestConfirmation,
+    showLoading,
+    hideLoading,
+    withLoading
+  }), [notify, requestConfirmation, showLoading, hideLoading, withLoading]);
+
+  return (
+    <FeedbackContext.Provider value={contextValue}>
+      {children}
+      <GlobalFeedbackModal
+        request={queue[0] || null}
+        isClosing={isClosing}
+        isProcessing={isProcessing}
+        onDismiss={handleDismiss}
+        onPrimary={handlePrimary}
+      />
+      <BrandLoadingOverlay visible={isLoading} message={loadingMessage} />
+    </FeedbackContext.Provider>
+  );
+};
+
+export const useFeedback = () => {
+  const context = useContext(FeedbackContext);
+  if (!context) {
+    throw new Error('useFeedback must be used within a FeedbackProvider');
+  }
+  return context;
+};
+
