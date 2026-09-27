@@ -49,4 +49,26 @@ button:disabled { opacity: .65; cursor: wait; }
 .form-message.success { color: var(--green); }
 .form-message.error { color: var(--red); }
 footer { margin-top: 24px; color: var(--muted); text-align: center; font-size: 12px; }
+.hidden { display: none !important; }
+.compact { margin: 36px 0 20px; }
+.link-button, .text-button { background: transparent; color: var(--blue); }
+.link-button { display: block; margin: 20px auto 0; padding: 0 8px; }
+.text-button { min-height: 0; margin: 0 0 0 5px; padding: 0; font-size: 12px; }
+.dashboard-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: 38px 0 18px; }
+.dashboard-head h2 { margin: 5px 0 0; color: var(--purple); font-size: clamp(22px, 5vw, 30px); }
+.outline-button { min-height: 42px; margin: 0; padding: 8px 12px; border: 1px solid var(--blue); background: #fff; color: var(--blue); font-size: 13px; }
+.outline-button:hover { background: #f0faff; color: var(--blue-dark); }
+.response-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.response-count { margin: 0; font-size: 16px; font-weight: 700; }
+.toolbar-buttons { display: flex; align-items: center; gap: 8px; }
+.toolbar-buttons button { margin-top: 0; }
+.response-list { display: grid; gap: 12px; margin-top: 18px; }
+.response-card { padding: 16px; border: 1px solid var(--line); border-radius: 15px; background: #fff; }
+.response-card h3 { overflow-wrap: anywhere; }
+.response-card p { margin: 7px 0 0; color: var(--muted); font-size: 14px; line-height: 1.45; overflow-wrap: anywhere; }
+.response-card p strong { color: var(--ink); }
+.response-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.response-card time { flex: 0 0 auto; color: var(--muted); font-size: 12px; }
+.helper { color: var(--muted); font-size: 14px; }
 @media (max-width: 480px) { .page-shell { padding: 24px 16px; } .card { padding: 19px; border-radius: 19px; } .intro { margin-top: 34px; } }
+@media (max-width: 430px) { .response-toolbar { align-items: flex-start; flex-direction: column; } .response-card-head { flex-direction: column; gap: 3px; } }
