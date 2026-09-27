@@ -1,6 +1,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js';
 import { getAuth, onAuthStateChanged, sendEmailVerification, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js';
 import { addDoc, collection, getDocs, getFirestore, orderBy, query, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js';
+import { notify, requestConfirmation, withLoading } from './feedback.js';
 
 const app = initializeApp({
   apiKey: 'AIzaSyC0QPpzGD9IzPAe83GUdoLbLCR7YhVXOnQ',
@@ -146,48 +147,76 @@ $('#toggle-manager-password').addEventListener('click', event => {
 
 form.addEventListener('submit', async event => {
   event.preventDefault();
-  submit.disabled = true;
   message.textContent = '';
 
   const recursosEssenciais = [...document.querySelectorAll('input[name="essential"]:checked')].map(item => item.value);
   const outraSolicitacao = $('#other-request').value.trim();
   const nome = $('#fullName').value.trim().replace(/\s+/g, ' ');
   if (!nome) {
-    setMessage(message, 'Informe seu nome completo.', true);
+    notify({
+      type: 'attention',
+      title: 'Nome obrigatório',
+      message: 'Por favor, informe seu nome completo para continuar.'
+    });
     $('#fullName').focus();
-    submit.disabled = false;
     return;
   }
   if (!validatePhone(true)) {
     $('#phone').reportValidity();
-    submit.disabled = false;
     return;
   }
   if (!recursosEssenciais.length && !outraSolicitacao) {
-    setMessage(message, 'Selecione ao menos uma necessidade ou escreva uma sugestão.', true);
-    submit.disabled = false;
+    notify({
+      type: 'attention',
+      title: 'Opinião necessária',
+      message: 'Selecione ao menos uma necessidade para o aplicativo ou escreva uma sugestão no campo de texto.'
+    });
     return;
   }
 
+  const confirmed = await requestConfirmation({
+    title: 'Confirmar envio do cadastro?',
+    message: `Olá, ${nome}!\n\nConfirma o envio dos seus dados de voluntário e suas opiniões sobre o aplicativo Rua do Céu?`,
+    confirmLabel: 'Sim, enviar agora',
+    cancelLabel: 'Revisar dados'
+  });
+
+  if (!confirmed) return;
+
+  submit.disabled = true;
   try {
-    await addDoc(collection(db, 'voluntariosAtivos'), {
-      nomeCompleto: nome,
-      funcao: $('#role').value,
-      telefoneWhatsApp: $('#phone').value.trim(),
-      email: $('#email').value.trim().toLowerCase(),
-      frenteTrabalho: $('#work-front').value.trim(),
-      recursosEssenciais,
-      outraSolicitacao,
-      ativo: true,
-      status: 'pendente',
-      origem: 'voluntarios-rua-do-ceu',
-      criadoEm: serverTimestamp(),
-    });
+    await withLoading(async () => {
+      await addDoc(collection(db, 'voluntariosAtivos'), {
+        nomeCompleto: nome,
+        funcao: $('#role').value,
+        telefoneWhatsApp: $('#phone').value.trim(),
+        email: $('#email').value.trim().toLowerCase(),
+        frenteTrabalho: $('#work-front').value.trim(),
+        recursosEssenciais,
+        outraSolicitacao,
+        ativo: true,
+        status: 'pendente',
+        origem: 'voluntarios-rua-do-ceu',
+        criadoEm: serverTimestamp(),
+      });
+    }, 'Enviando cadastro...');
+
     form.reset();
     setMessage(message, 'Obrigado! Seu cadastro e sua opinião foram enviados.');
+    notify({
+      type: 'success',
+      title: 'Cadastro enviado com sucesso!',
+      message: 'Agradecemos de coração por sua dedicação e contribuição como voluntário na Rua do Céu.',
+      buttonLabel: 'Concluir'
+    });
   } catch (error) {
     console.error('Falha ao salvar cadastro de voluntário.', error);
     setMessage(message, 'Não foi possível enviar agora. Verifique sua conexão e tente novamente.', true);
+    notify({
+      type: 'error',
+      title: 'Não foi possível enviar',
+      message: 'Houve uma falha ao enviar seu cadastro. Por favor, verifique sua conexão com a internet e tente novamente.'
+    });
   } finally {
     submit.disabled = false;
   }
@@ -202,23 +231,45 @@ $('#manager-login-form').addEventListener('submit', async event => {
   const button = $('#manager-login-button');
   button.disabled = true;
   setMessage($('#manager-login-message'), '');
+
   try {
-    const credential = await signInWithEmailAndPassword(auth, $('#manager-email').value.trim(), $('#manager-password').value);
+    const credential = await withLoading(async () => {
+      return await signInWithEmailAndPassword(auth, $('#manager-email').value.trim(), $('#manager-password').value);
+    }, 'Autenticando gestor...');
+
     if (credential.user.email?.toLowerCase() !== MANAGER_EMAIL) {
       await signOut(auth);
-      setMessage($('#manager-login-message'), 'Esta conta não está autorizada como Gestor.', true);
+      const errText = 'Esta conta não está autorizada como Gestor.';
+      setMessage($('#manager-login-message'), errText, true);
+      notify({
+        type: 'attention',
+        title: 'Acesso Não Autorizado',
+        message: 'Apenas a conta de e-mail designada como gestor tem autorização para visualizar este painel.'
+      });
       return;
     }
     if (!credential.user.emailVerified) {
       await sendEmailVerification(credential.user);
       await signOut(auth);
-      setMessage($('#manager-login-message'), 'Enviamos uma confirmação para o e-mail do Gestor. Confirme-a e entre novamente.', true);
+      const errText = 'Enviamos uma confirmação para o e-mail do Gestor. Confirme-a e entre novamente.';
+      setMessage($('#manager-login-message'), errText, true);
+      notify({
+        type: 'info',
+        title: 'Verificação Necessária',
+        message: 'Enviamos um link de confirmação para o e-mail do Gestor. Por favor, acerte a confirmação na sua caixa de entrada e entre novamente.'
+      });
       return;
     }
     showArea('manager-dashboard-view');
     await loadResponses();
   } catch (error) {
-    setMessage($('#manager-login-message'), friendlyAuthError(error), true);
+    const errMsg = friendlyAuthError(error);
+    setMessage($('#manager-login-message'), errMsg, true);
+    notify({
+      type: 'error',
+      title: 'Falha na autenticação',
+      message: errMsg
+    });
   } finally {
     button.disabled = false;
   }

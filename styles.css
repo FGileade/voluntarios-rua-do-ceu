@@ -93,3 +93,368 @@ footer { margin-top: 24px; color: var(--muted); text-align: center; font-size: 1
 @media (max-width: 480px) { .page-shell { padding: 24px 16px; } .card { padding: 19px; border-radius: 19px; } .intro { margin-top: 34px; } }
 @media (max-width: 430px) { .response-toolbar { align-items: flex-start; flex-direction: column; } .response-card-head { flex-direction: column; gap: 3px; } }
 @media (max-width: 480px) { .versiculo-banner { right: 16px; bottom: 16px; } }
+
+/* ==========================================================================
+   FEEDBACK MODAL & LOADING COM A MARCA (Skill: feedback-modal-marca)
+   ========================================================================== */
+
+/* Brand Loading Overlay */
+.brand-loading-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+
+.brand-loading-layer--visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.brand-loading-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.brand-loading-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.brand-loading-ring {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 5.5rem;
+  height: 5.5rem;
+}
+
+.brand-loading-ring::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  border: 3px solid rgba(0, 158, 224, 0.2);
+  border-top-color: var(--blue);
+  animation: brandLoadingSpin 900ms linear infinite;
+}
+
+.brand-loading-logo {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 9999px;
+  object-fit: contain;
+  background: #fff;
+  padding: 4px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  animation: brandLoadingPulse 1600ms ease-in-out infinite;
+}
+
+.brand-loading-message {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-align: center;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes brandLoadingSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes brandLoadingPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(0.92); opacity: 0.85; }
+}
+
+/* Global Feedback Modal */
+.global-feedback-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: max(1rem, env(safe-area-inset-top))
+           max(1rem, env(safe-area-inset-right))
+           max(1rem, env(safe-area-inset-bottom))
+           max(1rem, env(safe-area-inset-left));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.global-feedback-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: globalFeedbackBackdropIn 180ms ease-out both;
+}
+
+.global-feedback-dialog {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 30rem);
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  box-sizing: border-box;
+  border: 1px solid rgba(0, 158, 224, 0.25);
+  border-radius: 1.25rem;
+  background: #ffffff;
+  color: var(--ink);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(0, 158, 224, 0.12);
+  -webkit-overflow-scrolling: touch;
+}
+
+.global-feedback-dialog--entering {
+  animation: globalFeedbackDialogIn 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.global-feedback-dialog--closing {
+  animation: globalFeedbackDialogOut 180ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+.global-feedback-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem 0.875rem;
+  border-bottom: 1px solid var(--line);
+  background: #f8fafc;
+  border-radius: 1.25rem 1.25rem 0 0;
+}
+
+.global-feedback-brand {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 0.75rem;
+}
+
+.global-feedback-logo {
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 auto;
+  border: 2px solid var(--blue);
+  border-radius: 9999px;
+  object-fit: contain;
+  background: #fff;
+  padding: 2px;
+}
+
+.global-feedback-brand-name {
+  display: block;
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.global-feedback-brand-label {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--purple);
+  font-family: ui-monospace, monospace;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.global-feedback-close {
+  display: inline-flex;
+  min-width: 2.4rem;
+  min-height: 2.4rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 0.65rem;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+  transition: all 150ms ease;
+}
+
+.global-feedback-close:hover:not(:disabled) {
+  border-color: rgba(227, 6, 19, 0.4);
+  background: rgba(227, 6, 19, 0.08);
+  color: var(--red);
+}
+
+.global-feedback-content {
+  padding: 1.75rem 1.5rem 1.25rem;
+  text-align: center;
+}
+
+.global-feedback-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 4.25rem;
+  height: 4.25rem;
+  margin-bottom: 0.85rem;
+  border: 2px solid currentColor;
+  border-radius: 9999px;
+  background: rgba(248, 250, 252, 0.95);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.global-feedback-type {
+  display: inline-block;
+  margin-bottom: 0.4rem;
+  font-family: ui-monospace, monospace;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.feedback-badge-success { background: rgba(0, 150, 64, 0.1); color: var(--green); }
+.feedback-badge-error { background: rgba(227, 6, 19, 0.1); color: var(--red); }
+.feedback-badge-attention { background: rgba(245, 158, 11, 0.12); color: #d97706; }
+.feedback-badge-info { background: rgba(0, 158, 224, 0.1); color: var(--blue-dark); }
+
+.global-feedback-title {
+  margin: 0.35rem 0 0;
+  color: var(--ink);
+  font-size: clamp(1.2rem, 4vw, 1.45rem);
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.global-feedback-message {
+  max-width: 26rem;
+  margin: 0.7rem auto 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.55;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.global-feedback-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0 1.5rem 1.5rem;
+}
+
+.global-feedback-actions--confirmation > .global-feedback-button {
+  flex: 1 1 0;
+}
+
+.global-feedback-button {
+  display: inline-flex;
+  min-height: 2.85rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.8rem;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 0;
+  transition: transform 150ms ease, background-color 150ms ease;
+}
+
+.global-feedback-button--primary {
+  min-width: 9rem;
+  border: 1px solid var(--blue-dark);
+  background: var(--blue);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(0, 158, 224, 0.28);
+}
+
+.global-feedback-button--primary:hover:not(:disabled) {
+  background: var(--blue-dark);
+  transform: translateY(-1px);
+}
+
+.global-feedback-button--secondary {
+  min-width: 8rem;
+  border: 1px solid var(--line);
+  background: #f8fafc;
+  color: var(--ink);
+}
+
+.global-feedback-button--secondary:hover:not(:disabled) {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+}
+
+.brand-spinner {
+  animation: brandLoadingSpin 800ms linear infinite;
+}
+
+@keyframes globalFeedbackBackdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes globalFeedbackDialogIn {
+  from { opacity: 0; transform: translateY(0.75rem) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes globalFeedbackDialogOut {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(0.5rem) scale(0.98); }
+}
+
+@media (max-width: 480px) {
+  .global-feedback-layer {
+    align-items: flex-end;
+  }
+  .global-feedback-dialog {
+    width: 100%;
+    border-radius: 1.25rem 1.25rem 0.5rem 0.5rem;
+  }
+  .global-feedback-actions {
+    flex-direction: column-reverse;
+  }
+  .global-feedback-actions--confirmation > .global-feedback-button,
+  .global-feedback-button--primary,
+  .global-feedback-button--secondary {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-loading-ring::before,
+  .brand-loading-logo,
+  .brand-spinner {
+    animation: none;
+  }
+  .global-feedback-backdrop,
+  .global-feedback-dialog--entering,
+  .global-feedback-dialog--closing {
+    animation: none;
+  }
+}
