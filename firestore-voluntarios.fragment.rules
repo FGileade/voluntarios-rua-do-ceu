@@ -27,5 +27,7 @@ match /voluntariosAtivos/{submissionId} {
     && request.auth.token.email == 'filipegileade@gmail.com'
     && request.auth.token.email_verified == true;
 
-  allow update, delete: if false;
+  allow update, delete: if request.auth != null
+    && request.auth.token.email == 'filipegileade@gmail.com'
+    && request.auth.token.email_verified == true;
 }

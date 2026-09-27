@@ -74,6 +74,59 @@
       </section>
       <button class="link-button back-to-form" type="button">Voltar ao formulário</button>
     </section>
+
+    <!-- Modal de Edição de Cadastro para o Gestor -->
+    <div id="edit-modal-layer" class="edit-modal-layer hidden" aria-hidden="true">
+      <div class="edit-modal-backdrop" id="edit-modal-backdrop"></div>
+      <div class="edit-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="edit-modal-title">
+        <header class="edit-modal-header">
+          <div>
+            <h3 id="edit-modal-title">Editar cadastro de voluntário</h3>
+            <p class="edit-modal-subtitle">Atualize as informações do voluntário selecionado</p>
+          </div>
+          <button type="button" id="edit-modal-close" class="edit-modal-close-btn" aria-label="Fechar edição">✕</button>
+        </header>
+        <form id="edit-volunteer-form">
+          <input type="hidden" id="edit-doc-id" />
+          <label for="edit-fullName">Nome completo</label>
+          <input id="edit-fullName" required />
+
+          <label for="edit-role">Função</label>
+          <select id="edit-role" required>
+            <option value="Monitor">Monitor</option>
+            <option value="Líder de Equipe">Líder de Equipe</option>
+            <option value="Administrador">Administrador</option>
+          </select>
+
+          <label for="edit-phone">Telefone / WhatsApp</label>
+          <input id="edit-phone" type="tel" inputmode="tel" maxlength="15" required />
+
+          <label for="edit-email">E-mail</label>
+          <input id="edit-email" type="email" inputmode="email" autocapitalize="none" required />
+
+          <label for="edit-work-front">Nome da frente de trabalho</label>
+          <input id="edit-work-front" required />
+
+          <fieldset>
+            <legend>Necessidades consideradas importantes</legend>
+            <label class="check"><input type="checkbox" name="editEssential" value="Cadastro de famílias e crianças" /> Cadastro de famílias e crianças</label>
+            <label class="check"><input type="checkbox" name="editEssential" value="Organização das equipes" /> Organização das equipes</label>
+            <label class="check"><input type="checkbox" name="editEssential" value="Gestão das dracmas digital" /> Gestão das dracmas digital</label>
+            <label class="check"><input type="checkbox" name="editEssential" value="Agenda e escalas" /> Agenda e escalas</label>
+            <label class="check"><input type="checkbox" name="editEssential" value="Comunicação e avisos" /> Comunicação e avisos</label>
+            <label class="check"><input type="checkbox" name="editEssential" value="Relatórios" /> Relatórios</label>
+          </fieldset>
+
+          <label for="edit-other-request">Outra ideia ou sugestão</label>
+          <textarea id="edit-other-request"></textarea>
+
+          <div class="edit-modal-actions">
+            <button type="button" id="edit-cancel-btn" class="outline-button">Cancelar</button>
+            <button type="submit" id="edit-save-btn">Salvar alterações</button>
+          </div>
+        </form>
+      </div>
+    </div>
     </main>
 
     <footer class="site-footer">

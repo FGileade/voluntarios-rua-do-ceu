@@ -1,6 +1,6 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js';
 import { getAuth, onAuthStateChanged, sendEmailVerification, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js';
-import { addDoc, collection, getDocs, getFirestore, orderBy, query, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js';
+import { addDoc, collection, deleteDoc, doc, getDocs, getFirestore, orderBy, query, serverTimestamp, updateDoc } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js';
 import { notify, requestConfirmation, withLoading } from './feedback.js';
 
 const app = initializeApp({
@@ -107,7 +107,7 @@ async function loadResponses() {
     }
     container.innerHTML = responses.map(person => {
       const needs = Array.isArray(person.recursosEssenciais) ? person.recursosEssenciais.join(', ') : '';
-      return `<article class="response-card">
+      return `<article class="response-card" data-id="${escapeHtml(person.id)}">
         <div class="response-card-head"><h3>${escapeHtml(person.nomeCompleto || 'Sem nome')}</h3><time${person.criadoEm?.toDate ? ` datetime="${escapeHtml(person.criadoEm.toDate().toISOString())}"` : ''}>${escapeHtml(dateText(person.criadoEm))}</time></div>
         <p><strong>Função:</strong> ${escapeHtml(person.funcao || '—')}</p>
         <p><strong>Frente:</strong> ${escapeHtml(person.frenteTrabalho || '—')}</p>
@@ -115,6 +115,10 @@ async function loadResponses() {
         <p><strong>E-mail:</strong> ${escapeHtml(person.email || '—')}</p>
         <p><strong>Necessidades:</strong> ${escapeHtml(needs || 'Nenhuma selecionada')}</p>
         <p><strong>Outra sugestão:</strong> ${escapeHtml(person.outraSolicitacao || '—')}</p>
+        <div class="response-actions">
+          <button type="button" class="action-btn-edit" data-action="edit" data-id="${escapeHtml(person.id)}">✏️ Editar</button>
+          <button type="button" class="action-btn-delete" data-action="delete" data-id="${escapeHtml(person.id)}">🗑️ Excluir</button>
+        </div>
       </article>`;
     }).join('');
   } catch (error) {
@@ -123,6 +127,66 @@ async function loadResponses() {
     $('#response-count').textContent = 'Respostas indisponíveis';
     container.innerHTML = '<p class="form-message error">A conta entrou, mas as regras do Firestore ainda não permitem consultar os cadastros. Peça a configuração do acesso do gestor.</p>';
     setMessage($('#responses-message'), 'Não foi possível ler os dados.', true);
+  }
+}
+
+function openEditModal(person) {
+  $('#edit-doc-id').value = person.id;
+  $('#edit-fullName').value = person.nomeCompleto || '';
+  $('#edit-role').value = person.funcao || 'Monitor';
+  $('#edit-phone').value = person.telefoneWhatsApp || '';
+  $('#edit-email').value = person.email || '';
+  $('#edit-work-front').value = person.frenteTrabalho || '';
+  $('#edit-other-request').value = person.outraSolicitacao || '';
+
+  const essentials = Array.isArray(person.recursosEssenciais) ? person.recursosEssenciais : [];
+  document.querySelectorAll('input[name="editEssential"]').forEach(cb => {
+    cb.checked = essentials.includes(cb.value);
+  });
+
+  const layer = $('#edit-modal-layer');
+  layer.classList.remove('hidden');
+  layer.setAttribute('aria-hidden', 'false');
+  $('#edit-fullName').focus();
+}
+
+function closeEditModal() {
+  const layer = $('#edit-modal-layer');
+  layer.classList.add('hidden');
+  layer.setAttribute('aria-hidden', 'true');
+}
+
+async function handleDeleteResponse(id) {
+  const person = responses.find(p => p.id === id);
+  const name = person?.nomeCompleto || 'este voluntário';
+
+  const confirmed = await requestConfirmation({
+    title: 'Excluir cadastro?',
+    message: `Tem certeza que deseja excluir o cadastro de "${name}"?\n\nEsta ação é irreversível e removerá a resposta permanentemente do banco de dados.`,
+    confirmLabel: 'Sim, excluir',
+    cancelLabel: 'Cancelar'
+  });
+
+  if (!confirmed) return;
+
+  try {
+    await withLoading(async () => {
+      await deleteDoc(doc(db, 'voluntariosAtivos', id));
+    }, 'Excluindo cadastro...');
+
+    notify({
+      type: 'success',
+      title: 'Cadastro excluído',
+      message: `O cadastro de "${name}" foi excluído com sucesso.`
+    });
+    await loadResponses();
+  } catch (error) {
+    console.error('Falha ao excluir voluntário.', error);
+    notify({
+      type: 'error',
+      title: 'Erro ao excluir',
+      message: 'Não foi possível excluir o cadastro. Verifique suas permissões e tente novamente.'
+    });
   }
 }
 
@@ -313,8 +377,104 @@ $('#download-responses').addEventListener('click', async event => {
   }
 });
 
+// Delegação de eventos para botões Editar e Excluir na lista de respostas
+$('#response-list').addEventListener('click', event => {
+  const target = event.target.closest('button[data-action]');
+  if (!target) return;
+  const action = target.getAttribute('data-action');
+  const id = target.getAttribute('data-id');
+
+  if (action === 'edit') {
+    const person = responses.find(p => p.id === id);
+    if (person) openEditModal(person);
+  } else if (action === 'delete') {
+    handleDeleteResponse(id);
+  }
+});
+
+// Fechamento do modal de edição
+$('#edit-modal-close').addEventListener('click', closeEditModal);
+$('#edit-cancel-btn').addEventListener('click', closeEditModal);
+$('#edit-modal-backdrop').addEventListener('click', closeEditModal);
+
+// Máscara de telefone no modal de edição
+$('#edit-phone').addEventListener('input', event => {
+  const input = event.target;
+  const digitPosition = phoneDigitsBeforeCaret(input.value, input.selectionStart ?? input.value.length);
+  input.value = formatPhone(input.value);
+  input.setSelectionRange(caretAfterDigits(input.value, digitPosition), caretAfterDigits(input.value, digitPosition));
+});
+
+// Envio das alterações no formulário de edição
+$('#edit-volunteer-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  const id = $('#edit-doc-id').value;
+  const saveBtn = $('#edit-save-btn');
+  const cancelBtn = $('#edit-cancel-btn');
+
+  const nome = $('#edit-fullName').value.trim().replace(/\s+/g, ' ');
+  if (!nome) {
+    notify({
+      type: 'attention',
+      title: 'Nome obrigatório',
+      message: 'O nome do voluntário não pode ficar em branco.'
+    });
+    return;
+  }
+
+  const phoneDigits = $('#edit-phone').value.replace(/\D/g, '');
+  if (phoneDigits.length !== 10 && phoneDigits.length !== 11) {
+    notify({
+      type: 'attention',
+      title: 'Telefone inválido',
+      message: 'Informe um telefone válido com DDD e 10 ou 11 números.'
+    });
+    return;
+  }
+
+  const recursosEssenciais = [...document.querySelectorAll('input[name="editEssential"]:checked')].map(item => item.value);
+  const outraSolicitacao = $('#edit-other-request').value.trim();
+
+  saveBtn.disabled = true;
+  cancelBtn.disabled = true;
+
+  try {
+    await withLoading(async () => {
+      const docRef = doc(db, 'voluntariosAtivos', id);
+      await updateDoc(docRef, {
+        nomeCompleto: nome,
+        funcao: $('#edit-role').value,
+        telefoneWhatsApp: $('#edit-phone').value.trim(),
+        email: $('#edit-email').value.trim().toLowerCase(),
+        frenteTrabalho: $('#edit-work-front').value.trim(),
+        recursosEssenciais,
+        outraSolicitacao
+      });
+    }, 'Salvando alterações...');
+
+    closeEditModal();
+    notify({
+      type: 'success',
+      title: 'Cadastro atualizado',
+      message: `Os dados de "${nome}" foram atualizados com sucesso.`
+    });
+    await loadResponses();
+  } catch (error) {
+    console.error('Falha ao atualizar dados do voluntário.', error);
+    notify({
+      type: 'error',
+      title: 'Erro ao atualizar',
+      message: 'Não foi possível salvar as alterações. Verifique as permissões de acesso e tente novamente.'
+    });
+  } finally {
+    saveBtn.disabled = false;
+    cancelBtn.disabled = false;
+  }
+});
+
 onAuthStateChanged(auth, async user => {
   if (!user || user.email?.toLowerCase() !== MANAGER_EMAIL || !user.emailVerified) return;
   showArea('manager-dashboard-view');
   await loadResponses();
 });
+
