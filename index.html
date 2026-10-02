@@ -29,6 +29,7 @@
         <label for="fullName">Nome completo</label><input id="fullName" name="fullName" autocomplete="name" autocapitalize="words" required />
         <label for="role">Função</label>
         <select id="role" name="role" required><option value="Monitor">Monitor</option><option value="Líder de Equipe">Líder de Equipe</option><option value="Administrador">Administrador</option></select>
+        <div id="leader-field" class="hidden"><label for="leader">Nome do líder de equipe</label><input id="leader" autocomplete="off" autocapitalize="words" placeholder="Digite o nome do seu líder" /></div>
         <label for="phone">Telefone / WhatsApp</label><input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="15" aria-describedby="phone-hint" required />
         <small id="phone-hint" class="field-hint">Informe DDD e telefone, por exemplo: (27) 99999-9999.</small>
         <label for="email">E-mail</label><input id="email" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="none" required />
@@ -68,6 +69,7 @@
         <button id="manager-sign-out" class="outline-button" type="button">Sair</button>
       </header>
       <section class="card">
+        <div class="response-filter"><label for="role-filter">Filtrar por função</label><select id="role-filter"><option value="">Todas as funções</option><option value="Monitor">Monitor</option><option value="Líder de Equipe">Líder de Equipe</option><option value="Administrador">Administrador</option></select></div>
         <div class="response-toolbar"><p id="response-count" class="response-count">Carregando respostas…</p><div class="toolbar-buttons"><button id="refresh-responses" class="outline-button" type="button">Atualizar</button><button id="download-responses" type="button" disabled>Baixar Excel</button></div></div>
         <p id="responses-message" class="form-message" aria-live="polite"></p>
         <div id="response-list" class="response-list"><p class="helper">Carregando…</p></div>
@@ -98,6 +100,7 @@
             <option value="Administrador">Administrador</option>
           </select>
 
+          <div id="edit-leader-field" class="hidden"><label for="edit-leader">Nome do líder de equipe</label><input id="edit-leader" autocomplete="off" autocapitalize="words" placeholder="Digite o nome do seu líder" /></div>
           <label for="edit-phone">Telefone / WhatsApp</label>
           <input id="edit-phone" type="tel" inputmode="tel" maxlength="15" required />
 

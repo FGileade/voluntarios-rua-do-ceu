@@ -91,6 +91,43 @@ function validatePhone(showMessage = false) {
   return valid;
 }
 
+function renderResponses() {
+  const container = $('#response-list');
+  if (!responses.length) {
+    $('#response-count').textContent = '0 respostas';
+    container.innerHTML = '<p class="helper">Ainda não há respostas enviadas.</p>';
+    return;
+  }
+  const roleFilter = $('#role-filter').value;
+  const visible = roleFilter ? responses.filter(person => person.funcao === roleFilter) : responses;
+  $('#response-count').textContent = roleFilter
+    ? `${visible.length} de ${responses.length} ${responses.length === 1 ? 'resposta' : 'respostas'}`
+    : `${responses.length} ${responses.length === 1 ? 'resposta' : 'respostas'}`;
+  if (!visible.length) {
+    container.innerHTML = '<p class="helper">Nenhum cadastro com esta função.</p>';
+    return;
+  }
+  container.innerHTML = visible.map(person => {
+    const needs = Array.isArray(person.recursosEssenciais) ? person.recursosEssenciais.join(', ') : '';
+    const id = escapeHtml(person.id);
+    return `<article class="response-card" data-id="${id}">
+        <div class="response-card-head"><h3>${escapeHtml(person.nomeCompleto || 'Sem nome')}</h3><time class="response-date"${person.criadoEm?.toDate ? ` datetime="${escapeHtml(person.criadoEm.toDate().toISOString())}"` : ''}>Inscrito em ${escapeHtml(dateText(person.criadoEm))}</time></div>
+        <label class="switch"><input type="checkbox" data-action="verify" data-id="${id}"${person.conferido ? ' checked' : ''} /><span class="switch-track" aria-hidden="true"></span><span>Cadastro conferido e autorizado</span></label>
+        <p><strong>Função:</strong> ${escapeHtml(person.funcao || '—')}</p>
+        ${person.funcao === 'Monitor' ? `<p><strong>Líder de equipe:</strong> ${escapeHtml(person.liderEquipe || '—')}</p>` : ''}
+        <p><strong>Frente:</strong> ${escapeHtml(person.frenteTrabalho || '—')}</p>
+        <p><strong>Telefone:</strong> ${escapeHtml(person.telefoneWhatsApp || '—')}</p>
+        <p><strong>E-mail:</strong> ${escapeHtml(person.email || '—')}</p>
+        <p><strong>Necessidades:</strong> ${escapeHtml(needs || 'Nenhuma selecionada')}</p>
+        <p><strong>Outra sugestão:</strong> ${escapeHtml(person.outraSolicitacao || '—')}</p>
+        <div class="response-actions">
+          <button type="button" class="action-btn-edit" data-action="edit" data-id="${id}">✏️ Editar</button>
+          <button type="button" class="action-btn-delete" data-action="delete" data-id="${id}">🗑️ Excluir</button>
+        </div>
+      </article>`;
+  }).join('');
+}
+
 async function loadResponses() {
   const container = $('#response-list');
   $('#response-count').textContent = 'Carregando respostas…';
@@ -99,28 +136,8 @@ async function loadResponses() {
   try {
     const result = await getDocs(query(collection(db, 'voluntariosAtivos'), orderBy('criadoEm', 'desc')));
     responses = result.docs.map(snapshot => ({ id: snapshot.id, ...snapshot.data() }));
-    $('#response-count').textContent = `${responses.length} ${responses.length === 1 ? 'resposta' : 'respostas'}`;
     $('#download-responses').disabled = responses.length === 0;
-    if (!responses.length) {
-      container.innerHTML = '<p class="helper">Ainda não há respostas enviadas.</p>';
-      return;
-    }
-    container.innerHTML = responses.map(person => {
-      const needs = Array.isArray(person.recursosEssenciais) ? person.recursosEssenciais.join(', ') : '';
-      return `<article class="response-card" data-id="${escapeHtml(person.id)}">
-        <div class="response-card-head"><h3>${escapeHtml(person.nomeCompleto || 'Sem nome')}</h3><time${person.criadoEm?.toDate ? ` datetime="${escapeHtml(person.criadoEm.toDate().toISOString())}"` : ''}>${escapeHtml(dateText(person.criadoEm))}</time></div>
-        <p><strong>Função:</strong> ${escapeHtml(person.funcao || '—')}</p>
-        <p><strong>Frente:</strong> ${escapeHtml(person.frenteTrabalho || '—')}</p>
-        <p><strong>Telefone:</strong> ${escapeHtml(person.telefoneWhatsApp || '—')}</p>
-        <p><strong>E-mail:</strong> ${escapeHtml(person.email || '—')}</p>
-        <p><strong>Necessidades:</strong> ${escapeHtml(needs || 'Nenhuma selecionada')}</p>
-        <p><strong>Outra sugestão:</strong> ${escapeHtml(person.outraSolicitacao || '—')}</p>
-        <div class="response-actions">
-          <button type="button" class="action-btn-edit" data-action="edit" data-id="${escapeHtml(person.id)}">✏️ Editar</button>
-          <button type="button" class="action-btn-delete" data-action="delete" data-id="${escapeHtml(person.id)}">🗑️ Excluir</button>
-        </div>
-      </article>`;
-    }).join('');
+    renderResponses();
   } catch (error) {
     console.error('Falha ao carregar respostas.', error);
     responses = [];
@@ -134,6 +151,8 @@ function openEditModal(person) {
   $('#edit-doc-id').value = person.id;
   $('#edit-fullName').value = person.nomeCompleto || '';
   $('#edit-role').value = person.funcao || 'Monitor';
+  $('#edit-leader').value = person.liderEquipe || '';
+  toggleLeaderField('edit-');
   $('#edit-phone').value = person.telefoneWhatsApp || '';
   $('#edit-email').value = person.email || '';
   $('#edit-work-front').value = person.frenteTrabalho || '';
@@ -253,12 +272,14 @@ form.addEventListener('submit', async event => {
       await addDoc(collection(db, 'voluntariosAtivos'), {
         nomeCompleto: nome,
         funcao: $('#role').value,
+        liderEquipe: $('#role').value === 'Monitor' ? $('#leader').value.trim() : '',
         telefoneWhatsApp: $('#phone').value.trim(),
         email: $('#email').value.trim().toLowerCase(),
         frenteTrabalho: $('#work-front').value.trim(),
         recursosEssenciais,
         outraSolicitacao,
         ativo: true,
+        conferido: false,
         status: 'pendente',
         origem: 'voluntarios-rua-do-ceu',
         criadoEm: serverTimestamp(),
@@ -350,10 +371,12 @@ $('#download-responses').addEventListener('click', async event => {
   try {
     const XLSX = await import('https://cdn.sheetjs.com/xlsx-0.20.3/package/xlsx.mjs');
     const rows = [
-      ['Nome completo', 'Função', 'Telefone / WhatsApp', 'E-mail', 'Frente de trabalho', 'Necessidades do aplicativo', 'Outra solicitação', 'Status', 'Data do cadastro'],
+      ['Nome completo', 'Função', 'Líder de equipe', 'Conferido', 'Telefone / WhatsApp', 'E-mail', 'Frente de trabalho', 'Necessidades do aplicativo', 'Outra solicitação', 'Status', 'Data do cadastro'],
       ...responses.map(person => [
         person.nomeCompleto || '',
         person.funcao || '',
+        person.liderEquipe || '',
+        person.conferido ? 'Sim' : 'Não',
         person.telefoneWhatsApp || '',
         person.email || '',
         person.frenteTrabalho || '',
@@ -364,7 +387,7 @@ $('#download-responses').addEventListener('click', async event => {
       ]),
     ];
     const sheet = XLSX.utils.aoa_to_sheet(rows);
-    sheet['!cols'] = [{ wch: 28 }, { wch: 20 }, { wch: 22 }, { wch: 32 }, { wch: 24 }, { wch: 48 }, { wch: 48 }, { wch: 16 }, { wch: 22 }];
+    sheet['!cols'] = [{ wch: 28 }, { wch: 20 }, { wch: 28 }, { wch: 12 }, { wch: 22 }, { wch: 32 }, { wch: 24 }, { wch: 48 }, { wch: 48 }, { wch: 16 }, { wch: 22 }];
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, sheet, 'Respostas');
     XLSX.writeFileXLSX(workbook, 'respostas-voluntarios-rua-do-ceu.xlsx');
@@ -374,6 +397,36 @@ $('#download-responses').addEventListener('click', async event => {
     setMessage($('#responses-message'), 'Não foi possível gerar o Excel. Verifique a conexão e tente novamente.', true);
   } finally {
     button.disabled = responses.length === 0;
+  }
+});
+
+function toggleLeaderField(prefix) {
+  const show = $(`#${prefix}role`).value === 'Monitor';
+  $(`#${prefix}leader-field`).classList.toggle('hidden', !show);
+  $(`#${prefix}leader`).required = show;
+}
+
+$('#role').addEventListener('change', () => toggleLeaderField(''));
+$('#edit-role').addEventListener('change', () => toggleLeaderField('edit-'));
+$('#role-filter').addEventListener('change', renderResponses);
+toggleLeaderField('');
+
+$('#response-list').addEventListener('change', async event => {
+  const input = event.target.closest('input[data-action="verify"]');
+  if (!input) return;
+  const person = responses.find(p => p.id === input.getAttribute('data-id'));
+  if (!person) return;
+  const checked = input.checked;
+  input.disabled = true;
+  try {
+    await updateDoc(doc(db, 'voluntariosAtivos', person.id), { conferido: checked });
+    person.conferido = checked;
+  } catch (error) {
+    console.error('Falha ao atualizar conferência.', error);
+    input.checked = !checked;
+    setMessage($('#responses-message'), 'Não foi possível salvar a conferência. Tente novamente.', true);
+  } finally {
+    input.disabled = false;
   }
 });
 
@@ -444,6 +497,7 @@ $('#edit-volunteer-form').addEventListener('submit', async event => {
       await updateDoc(docRef, {
         nomeCompleto: nome,
         funcao: $('#edit-role').value,
+        liderEquipe: $('#edit-role').value === 'Monitor' ? $('#edit-leader').value.trim() : '',
         telefoneWhatsApp: $('#edit-phone').value.trim(),
         email: $('#edit-email').value.trim().toLowerCase(),
         frenteTrabalho: $('#edit-work-front').value.trim(),

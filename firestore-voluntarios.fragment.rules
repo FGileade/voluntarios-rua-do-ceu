@@ -2,16 +2,18 @@
 // Não publique este arquivo sozinho: ele não contém as regras do app Rua do Céu.
 match /voluntariosAtivos/{submissionId} {
   allow create: if request.resource.data.keys().hasOnly([
-      'nomeCompleto', 'funcao', 'telefoneWhatsApp', 'email', 'frenteTrabalho',
-      'recursosEssenciais', 'outraSolicitacao', 'ativo', 'status', 'origem', 'criadoEm'
+      'nomeCompleto', 'funcao', 'liderEquipe', 'telefoneWhatsApp', 'email', 'frenteTrabalho',
+      'recursosEssenciais', 'outraSolicitacao', 'ativo', 'conferido', 'status', 'origem', 'criadoEm'
     ])
     && request.resource.data.keys().hasAll([
-      'nomeCompleto', 'funcao', 'telefoneWhatsApp', 'email', 'frenteTrabalho',
-      'recursosEssenciais', 'outraSolicitacao', 'ativo', 'status', 'origem', 'criadoEm'
+      'nomeCompleto', 'funcao', 'liderEquipe', 'telefoneWhatsApp', 'email', 'frenteTrabalho',
+      'recursosEssenciais', 'outraSolicitacao', 'ativo', 'conferido', 'status', 'origem', 'criadoEm'
     ])
     && request.resource.data.nomeCompleto is string
     && request.resource.data.nomeCompleto.size() >= 3
     && request.resource.data.funcao in ['Monitor', 'Líder de Equipe', 'Administrador']
+    && request.resource.data.liderEquipe is string
+    && request.resource.data.conferido == false
     && request.resource.data.telefoneWhatsApp is string
     && request.resource.data.email is string
     && request.resource.data.frenteTrabalho is string
